@@ -26,6 +26,7 @@
     <li>
       <a href="#about-the-project">About The Project</a>
     </li>
+    <li><a href="#used-tokens">Tokens</a></li>
     <li><a href="#nfts">NFTs Meter</a></li>
     <li><a href="#logical-contracts">Logical Contracts</a></li>
     <li><a href="#contact">Contact</a></li>
@@ -40,6 +41,13 @@
 BusinessBuilders is a project about NFTs, We want to build a self-sustaining system where NFTs evolve and increase their value. Also, you can simulate your empire with NFTs, fire and hire employees, build cities and worlds, find better relationships and simulate your business. You can learn, earn and play with businessbuilders.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
+
+## Used tokens
+
+### FTB
+Meter contract:  [0x6CFe9AdaD5215195c1Aa9755DAed29360e6Ab986](https://scan.meter.io/address/0x6CFe9AdaD5215195c1Aa9755DAed29360e6Ab986)
+
+Buy on: [Voltswap](https://info.voltswap.finance/#/token/0x6cfe9adad5215195c1aa9755daed29360e6ab986?network=meter)
 
 ## NFTS
 
