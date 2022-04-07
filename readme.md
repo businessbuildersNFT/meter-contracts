@@ -105,12 +105,12 @@ Meter contract:  [0x6dd1A47B8C1680F3B343931A85565f3FDa7133a4](https://scan.meter
 ### Multi Employee Deployer
 Generate all multi employees with the determined logic
 
-Meter contract:  [0xf1D4037B2f272c17204f00bD6C9e9ee42fdf2510](https://scan.meter.io/address/0xf1D4037B2f272c17204f00bD6C9e9ee42fdf2510)
+Meter contract:  [0x6ce4a37BBB412fbd6F414AFf8C59f59921301C87](https://scan.meter.io/address/0x6ce4a37BBB412fbd6F414AFf8C59f59921301C87)
 
 ### City Deployer
 Generate all cities with the determined logic
 
-Meter contract:  [0x689552BaD902CEDbe43106C357affAB8e1Fed422](https://scan.meter.io/address/0x689552BaD902CEDbe43106C357affAB8e1Fed422)
+Meter contract:  [0x81f2A43119251eB9A187df22fE29371A025a7621](https://scan.meter.io/address/0x81f2A43119251eB9A187df22fE29371A025a7621)
 
 ### City  Relations
 Meter contract:  [0x689552BaD902CEDbe43106C357affAB8e1Fed422](https://scan.meter.io/address/0x689552BaD902CEDbe43106C357affAB8e1Fed422)

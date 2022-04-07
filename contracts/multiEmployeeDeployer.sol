@@ -21,7 +21,7 @@ struct MultiEmployeesData {
 
 contract MultiEmployeeDeployer is Initializable, AccessControl {
     event Mint(address owner, uint256 id, uint256 time);
-    event Randomize(uint256 time);
+    event Randomize(uint256 time, address customer);
 
     event TransferValues(
         uint256 amount,
@@ -46,14 +46,16 @@ contract MultiEmployeeDeployer is Initializable, AccessControl {
     uint8 public constant NEED_EMPLOYEES = 5;
 
     uint16 public totalDeployments = 0;
-    uint16 public maxDeployments = 63;
+    uint16 public maxDeployments = 56;
 
     uint256 public employeePrice = 80000000000000000000000 wei;
     uint256 public deployerPrice = 100000000000000000000 wei;
+    uint256 public randomizePrice = 10000000000000000000 wei;
 
     mapping(address => bool) private usedAddress;
 
     IERC20 private token;
+    IERC20 private specialToken;
     Employees private employees;
     MultiEmployees private multiEmployees;
     EBaseDeployer private baseDeployer;
@@ -88,6 +90,10 @@ contract MultiEmployeeDeployer is Initializable, AccessControl {
         onlyRole(MAIN_OWNER)
     {
         baseDeployer = EBaseDeployer(_deployer);
+    }
+
+    function changeSpecialToken(address _token) external onlyRole(MAIN_OWNER) {
+        specialToken = IERC20(_token);
     }
 
     // Getters
@@ -135,12 +141,14 @@ contract MultiEmployeeDeployer is Initializable, AccessControl {
         usedAddress[owner] = true;
     }
 
-    function changePrice(uint256 minter, uint256 employee)
-        external
-        onlyRole(MAIN_OWNER)
-    {
-        employeePrice = employee;
-        deployerPrice = minter;
+    function changePrice(
+        uint256 _minter,
+        uint256 _employee,
+        uint256 _randomize
+    ) external onlyRole(MAIN_OWNER) {
+        employeePrice = _employee;
+        deployerPrice = _minter;
+        randomizePrice = _randomize;
     }
 
     // Alterators
@@ -221,26 +229,73 @@ contract MultiEmployeeDeployer is Initializable, AccessControl {
 
     function randomize() external onlyRole(MAIN_OWNER) {
         uint256 totalEmployees = multiEmployees.totalSupply();
+        uint8[] memory buildTypes = baseDeployer.getBuildTypes();
 
-        uint8[] memory manyRandoms = baseDeployer.randomBuildTypes(
+        uint256[] memory manyRandoms = baseDeployer.newRandomBatch(
+            0,
+            buildTypes.length - 1,
             totalEmployees
         );
 
         for (uint256 i = 0; i < manyRandoms.length; i++) {
             multiEmployees.alterEmployeeType(
                 multiEmployees.tokenByIndex(i),
-                manyRandoms[i],
+                buildTypes[manyRandoms[i]],
                 baseDeployer.calcEmployeePoints(
                     [
-                        manyRandoms[i],
-                        manyRandoms[i],
-                        manyRandoms[i],
-                        manyRandoms[i]
+                        buildTypes[manyRandoms[i]],
+                        buildTypes[manyRandoms[i]],
+                        buildTypes[manyRandoms[i]],
+                        buildTypes[manyRandoms[i]]
                     ]
                 )
             );
         }
 
-        emit Randomize(block.timestamp);
+        emit Randomize(block.timestamp, address(0));
+    }
+
+    function radomizeMyEmployees() external {
+        require(address(specialToken) != address(0), INVALID_ADDRESS);
+        uint256 _balance = multiEmployees.balanceOf(msg.sender);
+        require(_balance > 0, INVALID_LENGTH);
+
+        require(
+            specialToken.balanceOf(msg.sender) >= randomizePrice,
+            INVALID_PAYMENT
+        );
+
+        if (randomizePrice > 0) {
+            specialToken.transferFrom(
+                msg.sender,
+                liquidityAgregator,
+                randomizePrice
+            );
+        }
+
+        uint8[] memory buildTypes = baseDeployer.getBuildTypes();
+
+        uint256[] memory manyRandoms = baseDeployer.newRandomBatch(
+            0,
+            buildTypes.length - 1,
+            _balance
+        );
+
+        for (uint256 i = 0; i < _balance; i++) {
+            multiEmployees.alterEmployeeType(
+                multiEmployees.tokenOfOwnerByIndex(msg.sender, i),
+                buildTypes[manyRandoms[i]],
+                baseDeployer.calcEmployeePoints(
+                    [
+                        buildTypes[manyRandoms[i]],
+                        buildTypes[manyRandoms[i]],
+                        buildTypes[manyRandoms[i]],
+                        buildTypes[manyRandoms[i]]
+                    ]
+                )
+            );
+        }
+
+        emit Randomize(block.timestamp, msg.sender);
     }
 }

@@ -186,6 +186,15 @@ contract CitiesDeployer is Initializable, AccessControl {
         );
 
         cities.addPoints(_base, cities.getPoints(_toBurn), pointsPerLand);
+
+        if (cities.hasUniversity(_toBurn) && !cities.hasUniversity(_base)) {
+            cities.changeUniversityState(_base, cities.getUniversity(_toBurn));
+        }
+
+        if (cities.hasTownHall(_toBurn) && !cities.hasTownHall(_base)) {
+            cities.changeTownHallState(_base, cities.getTownHall(_toBurn));
+        }
+
         cities.burn(_toBurn);
 
         emit UpgradeCity(_base);
