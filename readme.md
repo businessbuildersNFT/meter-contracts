@@ -118,6 +118,9 @@ Meter contract:  [0x689552BaD902CEDbe43106C357affAB8e1Fed422](https://scan.meter
 ### University  Relations
 Meter contract:  [0x689552BaD902CEDbe43106C357affAB8e1Fed422](https://scan.meter.io/address/0x689552BaD902CEDbe43106C357affAB8e1Fed422)
 
+### Voltswap Rewards
+Meter contract:  [0x99643d1D8fC3A668D2bF6655a892016eb819665c](https://scan.meter.io/address/0x99643d1D8fC3A668D2bF6655a892016eb819665c)
+
 ## Contact
 
 BusinessBuilders Admin - [@nftbbuilders](https://twitter.com/nftbbuilders) - admin@businessbuilders.city
