@@ -257,7 +257,7 @@ contract VoltSwapRewards is Context, Initializable, AccessControl {
             );
         }
 
-        requests[_msgSender()] = block.timestamp + requestTiming;
+        requests[_msgSender()] = block.timestamp;
 
         emit RequestMiniEmployees(
             MiniEmployeesRequest(
