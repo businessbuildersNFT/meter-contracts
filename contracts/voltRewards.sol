@@ -255,7 +255,7 @@ contract VoltRewards is Context, Initializable, AccessControl {
                         _randoms[i + 1],
                         _randoms[i + 2],
                         _randoms[i],
-                        0,
+                        1,
                         baseDeployer.calcEmployeePoints(
                             [
                                 _randoms[i],
