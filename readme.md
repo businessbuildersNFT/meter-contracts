@@ -122,7 +122,7 @@ Meter contract:  [0x689552BaD902CEDbe43106C357affAB8e1Fed422](https://scan.meter
 Meter contract:  [0xD423269F7BC6dfab2c267e76E3D46A23a60563BA](https://scan.meter.io/address/0xD423269F7BC6dfab2c267e76E3D46A23a60563BA)
 
 ### Voltswap Volt Rewards
-Meter contract:  [0x02De8F4a35fdc8178cCb6Fd5B326b73F4a3ad53f](https://scan.meter.io/address/0x02De8F4a35fdc8178cCb6Fd5B326b73F4a3ad53f)
+Meter contract:  [0x1d31Eb94588f362D0A8C9D3B4804aF12B90EC217](https://scan.meter.io/address/0x1d31Eb94588f362D0A8C9D3B4804aF12B90EC217)
 
 ## Contact
 
