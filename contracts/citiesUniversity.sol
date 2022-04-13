@@ -12,6 +12,7 @@ import "./miniEmployee.sol";
 import "./tokenController.sol";
 import "./cityRelationsStorage.sol";
 import "./citiesUniversitiesStorage.sol";
+import "./interfaces/EBaseDeployer.sol";
 
 contract CityUniversities is Initializable, Context, AccessControl {
     bytes32 public constant MAIN_OWNER = keccak256("MAIN_OWNER");
@@ -27,9 +28,13 @@ contract CityUniversities is Initializable, Context, AccessControl {
     TokenController private tokenController;
     CityUniversitiesStorage private citiesUniversities;
     CityRelationsStorage private citiesStorage;
+    EBaseDeployer private baseDeployer;
 
     bool private openUniversityTokenRewards = true;
 
+    mapping(address => uint8) burnings;
+
+    uint8 public burnsToGetMini = 4;
     uint8 public miniEmployeesFlush = 20;
     uint8 public experienceToUniversity = 10;
     uint16 public pointsToAddBaseMultiplier = 1000;
@@ -40,7 +45,8 @@ contract CityUniversities is Initializable, Context, AccessControl {
         MiniEmployees _miniEmployees,
         Cities _cities,
         CityUniversitiesStorage _citiesUniversities,
-        CityRelationsStorage _citiesStorage
+        CityRelationsStorage _citiesStorage,
+        EBaseDeployer _baseDeployer
     ) external initializer {
         _setupRole(MAIN_OWNER, _msgSender());
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
@@ -51,6 +57,7 @@ contract CityUniversities is Initializable, Context, AccessControl {
         tokenController = _tokenController;
         citiesUniversities = _citiesUniversities;
         citiesStorage = _citiesStorage;
+        baseDeployer = _baseDeployer;
     }
 
     //Update
@@ -69,6 +76,24 @@ contract CityUniversities is Initializable, Context, AccessControl {
 
     function updateUniversityXP(uint8 _xp) external onlyRole(MAIN_OWNER) {
         experienceToUniversity = _xp;
+    }
+
+    function changeDirectAddresses(
+        TokenController _tokenController,
+        Employees _employees,
+        MiniEmployees _miniEmployees,
+        Cities _cities,
+        CityUniversitiesStorage _citiesUniversities,
+        CityRelationsStorage _citiesStorage,
+        EBaseDeployer _baseDeployer
+    ) external onlyRole(MAIN_OWNER) {
+        employees = _employees;
+        miniEmployees = _miniEmployees;
+        cities = _cities;
+        tokenController = _tokenController;
+        citiesUniversities = _citiesUniversities;
+        citiesStorage = _citiesStorage;
+        baseDeployer = _baseDeployer;
     }
 
     // Getters
@@ -215,8 +240,32 @@ contract CityUniversities is Initializable, Context, AccessControl {
 
         for (uint256 i = 0; i < _employees.length; i++) {
             require(miniEmployees.validate(_employees[i]), INVALID_EMPLOYEE);
-            miniEmployees.burn(_employees[i]);
+
             _totalPoints += miniEmployees.getPoints(_employees[i]);
+
+            if (cities.ownerOf(_city) != _msgSender()) {
+                if (burnings[_msgSender()] < burnsToGetMini) {
+                    burnings[_msgSender()]++;
+                } else {
+                    uint8[] memory _parts = baseDeployer.randomBuildTypes(4);
+
+                    miniEmployees.mint(
+                        _parts[0],
+                        _parts[1],
+                        _parts[2],
+                        _parts[3],
+                        0,
+                        baseDeployer.calcEmployeePoints(
+                            [_parts[0], _parts[1], _parts[2], _parts[3]]
+                        ),
+                        _msgSender()
+                    );
+
+                    burnings[_msgSender()] = 0;
+                }
+            }
+
+            miniEmployees.burn(_employees[i]);
         }
 
         citiesUniversities.updateLockedPoints(_city, _totalPoints);

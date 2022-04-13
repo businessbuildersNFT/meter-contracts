@@ -116,7 +116,7 @@ Meter contract:  [0x81f2A43119251eB9A187df22fE29371A025a7621](https://scan.meter
 Meter contract:  [0x689552BaD902CEDbe43106C357affAB8e1Fed422](https://scan.meter.io/address/0x689552BaD902CEDbe43106C357affAB8e1Fed422)
 
 ### University  Relations
-Meter contract:  [0x689552BaD902CEDbe43106C357affAB8e1Fed422](https://scan.meter.io/address/0x689552BaD902CEDbe43106C357affAB8e1Fed422)
+Meter contract:  [0xefdb90784fdC894D8B7D3795F9465443b8Ef51e0](https://scan.meter.io/address/0xefdb90784fdC894D8B7D3795F9465443b8Ef51e0)
 
 ### Voltswap LP Rewards
 Meter contract:  [0xD423269F7BC6dfab2c267e76E3D46A23a60563BA](https://scan.meter.io/address/0xD423269F7BC6dfab2c267e76E3D46A23a60563BA)
