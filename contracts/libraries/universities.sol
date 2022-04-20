@@ -26,5 +26,7 @@ library UniversitiesLibrary {
         CitiesLibrary.FactoryAddition addition;
         uint256 cityRewards;
         uint256 factoryRewards;
+        uint256 relationRewards;
+        uint256 maxMultiplier;
     }
 }

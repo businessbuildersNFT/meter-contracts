@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "./libraries/employee.sol";
 import "./employee.sol";
 import "./interfaces/EBaseDeployer.sol";
+import "./interfaces/ETeamLeaderValidations.sol";
 
 contract EmployeeDeployer is Initializable, AccessControl {
     bytes32 public constant MAIN_OWNER = keccak256("MAIN_OWNER");
@@ -26,11 +27,11 @@ contract EmployeeDeployer is Initializable, AccessControl {
     uint8 public playToEarnFee = 95;
 
     uint256 public employeePrice = 10000000000000000000000 wei;
-    uint16 public maxDeployments = 1000;
 
     IERC20 private token;
     Employees private employees;
     EBaseDeployer private baseDeployer;
+    ETeamLeaderValidations private teamLeader;
 
     address public creator;
     address public playToEarnPool;
@@ -38,7 +39,8 @@ contract EmployeeDeployer is Initializable, AccessControl {
     function initialize(
         address _token,
         address _baseDeployer,
-        address _employees
+        address _employees,
+        address _teamLeader
     ) external initializer {
         _setupRole(MAIN_OWNER, msg.sender);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -48,6 +50,7 @@ contract EmployeeDeployer is Initializable, AccessControl {
         token = IERC20(_token);
         employees = Employees(_employees);
         baseDeployer = EBaseDeployer(_baseDeployer);
+        teamLeader = ETeamLeaderValidations(_teamLeader);
     }
 
     // Getters
@@ -66,6 +69,18 @@ contract EmployeeDeployer is Initializable, AccessControl {
     }
 
     // Setters
+
+    function updateAddresses(
+        address _token,
+        address _baseDeployer,
+        address _employees,
+        address _teamLeader
+    ) external onlyRole(MAIN_OWNER) {
+        token = IERC20(_token);
+        employees = Employees(_employees);
+        baseDeployer = EBaseDeployer(_baseDeployer);
+        teamLeader = ETeamLeaderValidations(_teamLeader);
+    }
 
     function changeRedirectAddresses(address _creator, address _playToEarnPool)
         external
@@ -90,10 +105,6 @@ contract EmployeeDeployer is Initializable, AccessControl {
 
     function setEmployeePrice(uint256 _price) external onlyRole(MAIN_OWNER) {
         employeePrice = _price;
-    }
-
-    function setMaxDeployments(uint16 max) external onlyRole(MAIN_OWNER) {
-        maxDeployments = max;
     }
 
     // Payment
@@ -140,5 +151,7 @@ contract EmployeeDeployer is Initializable, AccessControl {
             ),
             msg.sender
         );
+
+        teamLeader.addXPToOwner(msg.sender, 10);
     }
 }

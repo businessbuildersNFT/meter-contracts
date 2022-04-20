@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "./libraries/employee.sol";
 import "./interfaces/EBaseDeployer.sol";
+import "./interfaces/ETeamLeaderValidations.sol";
 import "./employee.sol";
 import "./miniEmployee.sol";
 import "./employeeExpanded.sol";
@@ -77,6 +78,7 @@ contract MiniEmployeeDeployer is Initializable, AccessControl {
     MiniEmployees private miniEmployees;
     EBaseDeployer private baseDeployer;
     EmployeesExpanded private employeeExpanded;
+    ETeamLeaderValidations private teamLeader;
 
     address public creator;
     address public liquidityAgregator;
@@ -92,7 +94,8 @@ contract MiniEmployeeDeployer is Initializable, AccessControl {
         address _employees,
         address _baseDeployer,
         address _miniEmployees,
-        address _employeeExpanded
+        address _employeeExpanded,
+        address _teamLeader
     ) external initializer {
         _setupRole(MAIN_OWNER, msg.sender);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -105,6 +108,35 @@ contract MiniEmployeeDeployer is Initializable, AccessControl {
         miniEmployees = MiniEmployees(_miniEmployees);
         baseDeployer = EBaseDeployer(_baseDeployer);
         employeeExpanded = EmployeesExpanded(_employeeExpanded);
+        teamLeader = ETeamLeaderValidations(_teamLeader);
+    }
+
+    function changeAddresses(
+        address _token,
+        address _specialToken,
+        address _employees,
+        address _baseDeployer,
+        address _miniEmployees,
+        address _employeeExpanded,
+        address _teamLeader
+    ) external onlyRole(MAIN_OWNER) {
+        token = IERC20(_token);
+        specialToken = IERC20(_specialToken);
+        employees = Employees(_employees);
+        miniEmployees = MiniEmployees(_miniEmployees);
+        baseDeployer = EBaseDeployer(_baseDeployer);
+        employeeExpanded = EmployeesExpanded(_employeeExpanded);
+        teamLeader = ETeamLeaderValidations(_teamLeader);
+    }
+
+    function changeRedirectAddresses(
+        address _creator,
+        address _playToEarnPool,
+        address _liquidityAgregator
+    ) external onlyRole(MAIN_OWNER) {
+        playToEarnPool = _playToEarnPool;
+        liquidityAgregator = _liquidityAgregator;
+        creator = _creator;
     }
 
     // Getters
@@ -146,16 +178,6 @@ contract MiniEmployeeDeployer is Initializable, AccessControl {
     }
 
     // Setters
-
-    function changeRedirectAddresses(
-        address _creator,
-        address _playToEarnPool,
-        address _liquidityAgregator
-    ) external onlyRole(MAIN_OWNER) {
-        playToEarnPool = _playToEarnPool;
-        liquidityAgregator = _liquidityAgregator;
-        creator = _creator;
-    }
 
     function changeConfigurations(IERC20 _token, IERC20 _specialToken)
         external
@@ -261,7 +283,7 @@ contract MiniEmployeeDeployer is Initializable, AccessControl {
         return true;
     }
 
-    function normalMint() private {
+    function normalMint(address _owner) private {
         uint8[] memory parts = baseDeployer.randomBuildTypes(4);
 
         miniEmployees.mint(
@@ -273,11 +295,13 @@ contract MiniEmployeeDeployer is Initializable, AccessControl {
             baseDeployer.calcEmployeePoints(
                 [parts[0], parts[1], parts[2], parts[3]]
             ),
-            msg.sender
+            _owner
         );
+
+        teamLeader.addXPToOwner(_owner, 1);
     }
 
-    function packageMint() private {
+    function packageMint(address _owner) private {
         uint8[] memory parts = baseDeployer.randomBuildTypes(packageSize * 4);
 
         for (uint8 i = 0; i < packageSize * 4; i += 4) {
@@ -290,9 +314,11 @@ contract MiniEmployeeDeployer is Initializable, AccessControl {
                 baseDeployer.calcEmployeePoints(
                     [parts[i], parts[i + 1], parts[i + 2], parts[i + 3]]
                 ),
-                msg.sender
+                _owner
             );
         }
+
+        teamLeader.addXPToOwner(_owner, 1 * packageSize);
     }
 
     function mintSpecialEmployee() external {
@@ -346,12 +372,14 @@ contract MiniEmployeeDeployer is Initializable, AccessControl {
         if (specialEmployeePrice >= specialEmployeeMaxPrice) {
             specialEmployeePrice = specialEmployeeInitPrice;
         }
+
+        teamLeader.addXPToOwner(msg.sender, 5);
     }
 
     function mintPayedEmployee(bool package) external {
         require(payMint(msg.sender, package, true, 1), INVALID_PAYMENT);
-        if (package) packageMint();
-        else normalMint();
+        if (package) packageMint(msg.sender);
+        else normalMint(msg.sender);
     }
 
     function upgradeEmployee(uint256 miniEmployee) external {
@@ -378,6 +406,8 @@ contract MiniEmployeeDeployer is Initializable, AccessControl {
         );
 
         miniEmployees.burn(miniEmployee);
+
+        teamLeader.addXPToOwner(msg.sender, 1);
 
         emit Upgrade(msg.sender, miniEmployee, points);
     }
@@ -420,6 +450,8 @@ contract MiniEmployeeDeployer is Initializable, AccessControl {
 
         employeeExpanded.addMerge(men, 1);
         employeeExpanded.addMerge(woman, 1);
+
+        teamLeader.addXPToOwner(msg.sender, 1);
 
         emit Merge(msg.sender, men, woman);
     }
@@ -478,5 +510,7 @@ contract MiniEmployeeDeployer is Initializable, AccessControl {
 
         employeeExpanded.addMerge(men, times);
         employeeExpanded.addMerge(woman, times);
+
+        teamLeader.addXPToOwner(msg.sender, times);
     }
 }

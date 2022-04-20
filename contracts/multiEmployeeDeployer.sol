@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "./interfaces/EBaseDeployer.sol";
+import "./interfaces/ETeamLeaderValidations.sol";
 import "./employee.sol";
 import "./multiEmployee.sol";
 import "./randomUtil.sol";
@@ -60,6 +61,7 @@ contract MultiEmployeeDeployer is Initializable, AccessControl {
     MultiEmployees private multiEmployees;
     EBaseDeployer private baseDeployer;
     EmployeesExpanded private employeeExpanded;
+    ETeamLeaderValidations private teamLeader;
 
     address public creator;
     address public liquidityAgregator;
@@ -68,10 +70,12 @@ contract MultiEmployeeDeployer is Initializable, AccessControl {
 
     function initialize(
         address _token,
+        address _specialToken,
         address _baseDeployer,
         address _employees,
         address _multiEmployees,
-        address _employeeExpanded
+        address _employeeExpanded,
+        address _teamLeader
     ) external initializer {
         _setupRole(MAIN_OWNER, msg.sender);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -79,21 +83,30 @@ contract MultiEmployeeDeployer is Initializable, AccessControl {
         creator = msg.sender;
 
         token = IERC20(_token);
+        specialToken = IERC20(_specialToken);
         employees = Employees(_employees);
         multiEmployees = MultiEmployees(_multiEmployees);
         baseDeployer = EBaseDeployer(_baseDeployer);
         employeeExpanded = EmployeesExpanded(_employeeExpanded);
+        teamLeader = ETeamLeaderValidations(_teamLeader);
     }
 
-    function changeBaseDeployer(address _deployer)
-        external
-        onlyRole(MAIN_OWNER)
-    {
-        baseDeployer = EBaseDeployer(_deployer);
-    }
-
-    function changeSpecialToken(address _token) external onlyRole(MAIN_OWNER) {
-        specialToken = IERC20(_token);
+    function changeAddresses(
+        address _token,
+        address _specialToken,
+        address _baseDeployer,
+        address _employees,
+        address _multiEmployees,
+        address _employeeExpanded,
+        address _teamLeader
+    ) external onlyRole(MAIN_OWNER) {
+        token = IERC20(_token);
+        specialToken = IERC20(_specialToken);
+        employees = Employees(_employees);
+        multiEmployees = MultiEmployees(_multiEmployees);
+        baseDeployer = EBaseDeployer(_baseDeployer);
+        employeeExpanded = EmployeesExpanded(_employeeExpanded);
+        teamLeader = ETeamLeaderValidations(_teamLeader);
     }
 
     // Getters
@@ -196,6 +209,8 @@ contract MultiEmployeeDeployer is Initializable, AccessControl {
 
         usedAddress[msg.sender] = true;
         totalDeployments++;
+
+        teamLeader.addXPToOwner(msg.sender, 20);
 
         emit Mint(msg.sender, totalDeployments, block.timestamp);
     }

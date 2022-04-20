@@ -4,8 +4,10 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./interfaces/ECityStorage.sol";
+import "./interfaces/ETeamLeaderValidations.sol";
 import "./interfaces/EBaseDeployer.sol";
+import "./interfaces/ECityStorage.sol";
+import "./teamLeaderValidations.sol";
 import "./libraries/cities.sol";
 import "./factory.sol";
 import "./cities.sol";
@@ -31,6 +33,7 @@ contract CitiesDeployer is Initializable, AccessControl {
     IERC20 private token;
     ECityRelationsStorage private citiesStorage;
     EBaseDeployer private baseDeployer;
+    ETeamLeaderValidations private teamLeader;
 
     uint8 public creatorFee = 5;
     uint8 public playToEarnFee = 95;
@@ -49,7 +52,8 @@ contract CitiesDeployer is Initializable, AccessControl {
         address _factories,
         address _cities,
         address _citiesStorage,
-        address _baseDeployer
+        address _baseDeployer,
+        address _teamLeader
     ) public initializer {
         _setupRole(MAIN_OWNER, _msgSender());
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
@@ -60,10 +64,24 @@ contract CitiesDeployer is Initializable, AccessControl {
         token = IERC20(_token);
         citiesStorage = ECityRelationsStorage(_citiesStorage);
         baseDeployer = EBaseDeployer(_baseDeployer);
+        teamLeader = ETeamLeaderValidations(_teamLeader);
     }
 
-    function updateBaseDeployer(address _deployer) public onlyRole(MAIN_OWNER) {
-        baseDeployer = EBaseDeployer(_deployer);
+    function updateBaseAddresses(
+        address _token,
+        address _factories,
+        address _cities,
+        address _citiesStorage,
+        address _baseDeployer,
+        address _teamLeader
+    ) public onlyRole(MAIN_OWNER) {
+        creator = _msgSender();
+        factories = Factories(_factories);
+        cities = Cities(_cities);
+        token = IERC20(_token);
+        citiesStorage = ECityRelationsStorage(_citiesStorage);
+        baseDeployer = EBaseDeployer(_baseDeployer);
+        teamLeader = ETeamLeaderValidations(_teamLeader);
     }
 
     // Getters
@@ -144,6 +162,8 @@ contract CitiesDeployer is Initializable, AccessControl {
             pointsPerLand,
             _msgSender()
         );
+
+        teamLeader.addXPToOwner(_msgSender(), 10);
     }
 
     function addFactoryPoints(uint256 city, uint256[] memory _factories)
@@ -169,6 +189,8 @@ contract CitiesDeployer is Initializable, AccessControl {
         }
 
         cities.addPoints(city, totalPoints, pointsPerLand);
+
+        teamLeader.addXPToOwner(_msgSender(), 1);
 
         emit UpgradeCity(city);
     }
@@ -197,6 +219,8 @@ contract CitiesDeployer is Initializable, AccessControl {
 
         cities.burn(_toBurn);
 
+        teamLeader.addXPToOwner(_msgSender(), 1);
+
         emit UpgradeCity(_base);
         emit RemoveCity(_toBurn);
     }
@@ -205,6 +229,7 @@ contract CitiesDeployer is Initializable, AccessControl {
         require(cities.ownerOf(city) == _msgSender(), INVALID_OWNER);
         require(payment(_msgSender(), universityPrice));
         cities.changeUniversityState(city, 1);
+        teamLeader.addXPToOwner(_msgSender(), 10);
         emit AddUniversity(city);
     }
 
@@ -212,6 +237,7 @@ contract CitiesDeployer is Initializable, AccessControl {
         require(cities.ownerOf(_city) == _msgSender(), INVALID_OWNER);
         require(payment(_msgSender(), townHallPrice));
         cities.changeTownHallState(_city, 1);
+        teamLeader.addXPToOwner(_msgSender(), 10);
         emit AddTownHall(_city);
     }
 

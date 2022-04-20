@@ -12,7 +12,9 @@ import "./miniEmployee.sol";
 import "./tokenController.sol";
 import "./cityRelationsStorage.sol";
 import "./citiesUniversitiesStorage.sol";
+import "./cityRelationsGetters.sol";
 import "./interfaces/EBaseDeployer.sol";
+import "./interfaces/ETeamLeaderValidations.sol";
 
 contract CityUniversities is Initializable, Context, AccessControl {
     bytes32 public constant MAIN_OWNER = keccak256("MAIN_OWNER");
@@ -29,6 +31,8 @@ contract CityUniversities is Initializable, Context, AccessControl {
     CityUniversitiesStorage private citiesUniversities;
     CityRelationsStorage private citiesStorage;
     EBaseDeployer private baseDeployer;
+    ETeamLeaderValidations private teamLeader;
+    CityRelationsGetters private cityGetters;
 
     bool private openUniversityTokenRewards = true;
 
@@ -40,27 +44,53 @@ contract CityUniversities is Initializable, Context, AccessControl {
     uint16 public pointsToAddBaseMultiplier = 1000;
 
     function initialize(
-        TokenController _tokenController,
-        Employees _employees,
-        MiniEmployees _miniEmployees,
-        Cities _cities,
-        CityUniversitiesStorage _citiesUniversities,
-        CityRelationsStorage _citiesStorage,
-        EBaseDeployer _baseDeployer
+        address _tokenController,
+        address _employees,
+        address _miniEmployees,
+        address _cities,
+        address _citiesUniversities,
+        address _citiesStorage,
+        address _baseDeployer,
+        address _cityGetters,
+        address _teamLeader
     ) external initializer {
         _setupRole(MAIN_OWNER, _msgSender());
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
 
-        employees = _employees;
-        miniEmployees = _miniEmployees;
-        cities = _cities;
-        tokenController = _tokenController;
-        citiesUniversities = _citiesUniversities;
-        citiesStorage = _citiesStorage;
-        baseDeployer = _baseDeployer;
+        employees = Employees(_employees);
+        miniEmployees = MiniEmployees(_miniEmployees);
+        cities = Cities(_cities);
+        tokenController = TokenController(_tokenController);
+        citiesUniversities = CityUniversitiesStorage(_citiesUniversities);
+        citiesStorage = CityRelationsStorage(_citiesStorage);
+        baseDeployer = EBaseDeployer(_baseDeployer);
+        teamLeader = ETeamLeaderValidations(_teamLeader);
+        cityGetters = CityRelationsGetters(_cityGetters);
     }
 
     //Update
+
+    function updateAddresses(
+        address _tokenController,
+        address _employees,
+        address _miniEmployees,
+        address _cities,
+        address _citiesUniversities,
+        address _citiesStorage,
+        address _baseDeployer,
+        address _cityGetters,
+        address _teamLeader
+    ) external onlyRole(MAIN_OWNER) {
+        employees = Employees(_employees);
+        miniEmployees = MiniEmployees(_miniEmployees);
+        cities = Cities(_cities);
+        tokenController = TokenController(_tokenController);
+        citiesUniversities = CityUniversitiesStorage(_citiesUniversities);
+        citiesStorage = CityRelationsStorage(_citiesStorage);
+        baseDeployer = EBaseDeployer(_baseDeployer);
+        teamLeader = ETeamLeaderValidations(_teamLeader);
+        cityGetters = CityRelationsGetters(_cityGetters);
+    }
 
     function toggleUniversityRewards() external onlyRole(MAIN_OWNER) {
         openUniversityTokenRewards = !openUniversityTokenRewards;
@@ -76,24 +106,6 @@ contract CityUniversities is Initializable, Context, AccessControl {
 
     function updateUniversityXP(uint8 _xp) external onlyRole(MAIN_OWNER) {
         experienceToUniversity = _xp;
-    }
-
-    function changeDirectAddresses(
-        TokenController _tokenController,
-        Employees _employees,
-        MiniEmployees _miniEmployees,
-        Cities _cities,
-        CityUniversitiesStorage _citiesUniversities,
-        CityRelationsStorage _citiesStorage,
-        EBaseDeployer _baseDeployer
-    ) external onlyRole(MAIN_OWNER) {
-        employees = _employees;
-        miniEmployees = _miniEmployees;
-        cities = _cities;
-        tokenController = _tokenController;
-        citiesUniversities = _citiesUniversities;
-        citiesStorage = _citiesStorage;
-        baseDeployer = _baseDeployer;
     }
 
     // Getters
@@ -141,7 +153,9 @@ contract CityUniversities is Initializable, Context, AccessControl {
                 citiesStorage.getCityRelation(_city, _factory),
                 citiesStorage.getFactoryAddition(_factory, _owner),
                 citiesStorage.getCityRewards(_city),
-                citiesStorage.getFactoryRewards(_factory)
+                citiesStorage.getFactoryRewards(_factory),
+                cityGetters.getOwnerRelationRewards(_city, _factory, _owner),
+                teamLeader.getMaxMultiplicator(_owner)
             );
     }
 
@@ -165,7 +179,7 @@ contract CityUniversities is Initializable, Context, AccessControl {
 
     function sendMiniEmployeeToTheUniversity(
         uint256 _city,
-        uint256[] memory _employees
+        uint256[] calldata _employees
     ) external {
         require(cities.validate(_city), INVALID_CITY);
         require(cities.hasUniversity(_city), INVALID_UNIVERSITY);
@@ -227,11 +241,13 @@ contract CityUniversities is Initializable, Context, AccessControl {
                     _employees.length
             );
         }
+
+        teamLeader.addXPToOwner(_msgSender(), _employees.length);
     }
 
     function lockMiniEmployeesInTheUniversity(
         uint256 _city,
-        uint256[] memory _employees
+        uint256[] calldata _employees
     ) external {
         require(cities.validate(_city), INVALID_CITY);
         require(cities.hasUniversity(_city), INVALID_UNIVERSITY);
@@ -274,6 +290,8 @@ contract CityUniversities is Initializable, Context, AccessControl {
             _city,
             _totalPoints / pointsToAddBaseMultiplier
         );
+
+        teamLeader.addXPToOwner(_msgSender(), _employees.length);
     }
 
     function withdrawRelationsRewards() external {
@@ -359,5 +377,7 @@ contract CityUniversities is Initializable, Context, AccessControl {
         }
 
         citiesUniversities.updateUniversityXP(_msgSender(), _totalXP);
+
+        teamLeader.addXPToOwner(_msgSender(), _employees.length);
     }
 }

@@ -90,33 +90,36 @@ Meter contract:  [0xA32Ac0cBDfF9062CA4b0BD7daE22bc349d551850](https://scan.meter
 ### Employee Deployer
 Generate all employees with the determined logic
 
-Meter contract:  [0xe9c77242860e77872a31F2cFDf1Da9C70FEEb925](https://scan.meter.io/address/0xe9c77242860e77872a31F2cFDf1Da9C70FEEb925)
+Meter contract:  [0xeD96660431430D8A2a9B1D989aeDD04dCF0d2Ac3](https://scan.meter.io/address/0xeD96660431430D8A2a9B1D989aeDD04dCF0d2Ac3)
 
 ### Factory Deployer
 Generate all factories with the determined logic
 
-Meter contract:  [0x59b1952e7d6583F36f8b438173A2b42a9031fE1f](https://scan.meter.io/address/0x59b1952e7d6583F36f8b438173A2b42a9031fE1f)
+Meter contract:  [0xDd1c3C8a9eBa2E52E4F3Eb704Af5F6Dd0783cf82](https://scan.meter.io/address/0xDd1c3C8a9eBa2E52E4F3Eb704Af5F6Dd0783cf82)
 
 ### Mini Employee Deployer
 Generate all mini employees with the determined logic
 
-Meter contract:  [0x6dd1A47B8C1680F3B343931A85565f3FDa7133a4](https://scan.meter.io/address/0x6dd1A47B8C1680F3B343931A85565f3FDa7133a4)
+Meter contract:  [0xA3349910D7b393f5D9dA1E205364306669B72335](https://scan.meter.io/address/0xA3349910D7b393f5D9dA1E205364306669B72335)
 
 ### Multi Employee Deployer
 Generate all multi employees with the determined logic
 
-Meter contract:  [0x6ce4a37BBB412fbd6F414AFf8C59f59921301C87](https://scan.meter.io/address/0x6ce4a37BBB412fbd6F414AFf8C59f59921301C87)
+Meter contract:  [0xA1C437D81F5Da5Ab8978BF8cd976135Bcb5605bb](https://scan.meter.io/address/0xA1C437D81F5Da5Ab8978BF8cd976135Bcb5605bb)
 
 ### City Deployer
 Generate all cities with the determined logic
 
-Meter contract:  [0x81f2A43119251eB9A187df22fE29371A025a7621](https://scan.meter.io/address/0x81f2A43119251eB9A187df22fE29371A025a7621)
+Meter contract:  [0xF90c96A1295d9Ec01F095C0AE68c4D05169e9908](https://scan.meter.io/address/0xF90c96A1295d9Ec01F095C0AE68c4D05169e9908)
 
 ### City  Relations
-Meter contract:  [0x689552BaD902CEDbe43106C357affAB8e1Fed422](https://scan.meter.io/address/0x689552BaD902CEDbe43106C357affAB8e1Fed422)
+Meter contract:  [0xcE5D54E9D471e6AF5237a86D43459c48C206463E](https://scan.meter.io/address/0xcE5D54E9D471e6AF5237a86D43459c48C206463E)
 
 ### University  Relations
-Meter contract:  [0xefdb90784fdC894D8B7D3795F9465443b8Ef51e0](https://scan.meter.io/address/0xefdb90784fdC894D8B7D3795F9465443b8Ef51e0)
+Meter contract:  [0x6e0A51cc2Ef554EE31dcF5c1362772616db03741](https://scan.meter.io/address/0x6e0A51cc2Ef554EE31dcF5c1362772616db03741)
+
+### Relations Getters
+Meter contract:  [0x62544D6018E6Ff5F657309cd43C5E7A4b2FC67c8](https://scan.meter.io/address/0x62544D6018E6Ff5F657309cd43C5E7A4b2FC67c8)
 
 ### Voltswap LP Rewards
 Meter contract:  [0xD423269F7BC6dfab2c267e76E3D46A23a60563BA](https://scan.meter.io/address/0xD423269F7BC6dfab2c267e76E3D46A23a60563BA)

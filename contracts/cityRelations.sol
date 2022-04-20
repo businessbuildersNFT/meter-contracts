@@ -1,801 +1,551 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./libraries/cities.sol";
+import "./interfaces/ECityRelations.sol";
+import "./interfaces/ETeamLeaderValidations.sol";
+import "./interfaces/EUniversitiesStorage.sol";
+import "./interfaces/ECityStorage.sol";
+import "./interfaces/EBBERC721.sol";
+import "./cityRelationsGetters.sol";
 import "./factory.sol";
 import "./cities.sol";
-import "./employee.sol";
-import "./miniEmployee.sol";
-import "./multiEmployee.sol";
-import "./cityRelationsStorage.sol";
-import "./interfaces/EUniversitiesStorage.sol";
 
-contract CityRelations is Initializable, Context, AccessControl {
-    event CityRelation(
-        uint256 indexed city,
-        uint256 indexed factory,
-        address indexed agregator,
-        uint256 x,
-        uint256 y,
-        uint256 payment,
-        uint256 maxFactoryPoints,
-        uint256 time
-    );
-
-    event RemoveCityRelation(
-        uint256 indexed city,
-        uint256 indexed factory,
-        address indexed agregator,
-        uint256 x,
-        uint256 y,
-        uint256 rewards,
-        uint256 hardPayment,
-        uint256 time
-    );
-
-    event FactoryAddition(
-        uint256 indexed city,
-        uint256 indexed factory,
-        uint256 relationPercentage,
-        uint256 totalEmployees,
-        uint256 entryPayment,
-        uint256 relationPoints,
-        address indexed agregator,
-        uint256 time
-    );
-
-    event RemoveFactoryAddition(
-        uint256 indexed city,
-        uint256 indexed factory,
-        address indexed agregator,
-        uint256 rewards,
-        uint256 time
-    );
-
-    event ChangePropertyState(uint256 city, uint256 x, uint256 y);
-
-    bytes32 public constant MAIN_OWNER = keccak256("MAIN_OWNER");
-
-    string public constant INVALID_CITY_SPACES = "CR: Not enought spaces";
-    string public constant INVALID_PROPERTY_STATE = "CR: Invalid property";
-    string public constant HAS_RELATION = "CR: The property has a relation";
-    string public constant INVALID_OWNER = "CR: Invalid owner";
-    string public constant INVALID_FACTORY_STATE = "CR: Invalid factory";
-    string public constant INVALID_RELATION_POINTS = "CR: Invalid points";
-    string public constant INVALID_PAYMENT = "CR: Invalid payment";
-    string public constant INVALID_EMPLOYEES = "CR: Invalid employees";
-    string public constant INVALID_CITY = "CR: Invalid city";
-    string public constant INVALID_FACTORY = "CR: Invalid factory";
-    string public constant INVALID_RELATION = "CR: Invalid relation";
-    string public constant INVALID_RELATION_STATE = "CR: Invalid state";
-    string public constant INVALID_ADDRESS = "CR: Invalid address";
-    string public constant INVALID_ADDITION = "CR: Invalid addition";
-    string public constant INVALID_EMPLOYEE = "CR: Invalid employee";
-
+contract CityRelations is ECityRelations {
     mapping(uint256 => uint256) private factoryGame; // Factory => Time
     mapping(address => uint256) private removePenal; // Factory => Address => Time
 
-    Factories private factories;
-    Cities private cities;
-    Employees private employees;
-    MiniEmployees private miniEmployees;
-    MultiEmployees private multiEmployees;
     IERC20 private token;
-    CityRelationsStorage private citiesStorage;
+    Cities private cities;
+    Factories private factories;
+    BBERC721 private employees;
+    BBERC721 private miniEmployees;
+    BBERC721 private multiEmployees;
+    ETeamLeaderValidations private teamLeader;
+    ECityRelationsStorage private citiesStorage;
     ECityUniversitiesStorage private citiesUniversities;
-
-    uint8 private creatorFees = 0;
-    uint8 private cityFees = 5;
-    uint8 private factoryFees = 10;
-    uint8 private playToEarnFees = 100;
-    uint8 public rewardsMultiplier = 5;
-    uint8 public createRelationBase = 2;
-    uint16 public errorRange = 20;
-    uint32 public removeTime = 86400;
-    uint256 public resetedTime;
-
-    address private creator;
-    address private playToEarn;
+    CityRelationsGetters private cityGetters;
 
     function initialize(
-        IERC20 _token,
-        Employees _employees,
-        MiniEmployees _miniEmployees,
-        MultiEmployees _multiEmployees,
-        Factories _factories,
-        Cities _cities,
-        CityRelationsStorage _citiesStorage,
-        ECityUniversitiesStorage _citiesUniversities
+        address _token,
+        address _employees,
+        address _miniEmployees,
+        address _multiEmployees,
+        address _factories,
+        address _cities,
+        address _citiesStorage,
+        address _citiesUniversities,
+        address _cityGetters,
+        address _teamLeader
     ) external initializer {
         _setupRole(MAIN_OWNER, _msgSender());
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
 
         creator = _msgSender();
-        employees = _employees;
-        miniEmployees = _miniEmployees;
-        multiEmployees = _multiEmployees;
-        factories = _factories;
-        cities = _cities;
-        token = _token;
-        citiesStorage = _citiesStorage;
-        citiesUniversities = _citiesUniversities;
+        employees = BBERC721(_employees);
+        miniEmployees = BBERC721(_miniEmployees);
+        multiEmployees = BBERC721(_multiEmployees);
+        factories = Factories(_factories);
+        cities = Cities(_cities);
+        token = IERC20(_token);
+        cityGetters = CityRelationsGetters(_cityGetters);
+        citiesStorage = ECityRelationsStorage(_citiesStorage);
+        citiesUniversities = ECityUniversitiesStorage(_citiesUniversities);
+        teamLeader = ETeamLeaderValidations(_teamLeader);
     }
 
-    //Update
-
-    function updateFees(
-        uint8 _creator,
-        uint8 _city,
-        uint8 _factory,
-        uint8 _playToEarn
+    function changeAddresses(
+        address _token,
+        address _employees,
+        address _miniEmployees,
+        address _multiEmployees,
+        address _factories,
+        address _cities,
+        address _citiesStorage,
+        address _citiesUniversities,
+        address _cityGetters,
+        address _teamLeader
     ) external onlyRole(MAIN_OWNER) {
-        creatorFees = _creator;
-        cityFees = _city;
-        factoryFees = _factory;
-        playToEarnFees = _playToEarn;
+        employees = BBERC721(_employees);
+        miniEmployees = BBERC721(_miniEmployees);
+        multiEmployees = BBERC721(_multiEmployees);
+        factories = Factories(_factories);
+        cities = Cities(_cities);
+        token = IERC20(_token);
+        cityGetters = CityRelationsGetters(_cityGetters);
+        citiesStorage = ECityRelationsStorage(_citiesStorage);
+        citiesUniversities = ECityUniversitiesStorage(_citiesUniversities);
+        teamLeader = ETeamLeaderValidations(_teamLeader);
+    }
+
+    function updateRedirectAddress(address _c, address _p)
+        external
+        onlyRole(MAIN_OWNER)
+    {
+        creator = _c;
+        playToEarn = _p;
     }
 
     function updateResetedTime() external onlyRole(MAIN_OWNER) {
         resetedTime = block.timestamp;
     }
 
-    function updateRedirectAddress(address _creator, address _playToEarn)
-        external
-        onlyRole(MAIN_OWNER)
-    {
-        creator = _creator;
-        playToEarn = _playToEarn;
-    }
-
-    function updatePenalTime(uint32 _time) external onlyRole(MAIN_OWNER) {
-        removeTime = _time;
-    }
-
-    function updateErrorRange(uint16 _range) external onlyRole(MAIN_OWNER) {
-        errorRange = _range;
-    }
-
-    function updateRewardsMultiplier(uint8 _total)
-        external
-        onlyRole(MAIN_OWNER)
-    {
-        rewardsMultiplier = _total;
-    }
-
-    // Getters
-
     function gameData() external view returns (CitiesLibrary.GameData memory) {
         return
             CitiesLibrary.GameData(
-                creatorFees,
-                cityFees,
-                factoryFees,
-                playToEarnFees,
+                cityGetters.creatorFees(),
+                cityGetters.cityFees(),
+                cityGetters.factoryFees(),
+                cityGetters.playToEarnFees(),
                 citiesStorage.getRelationsData()
             );
     }
 
-    function getOwnerRelationRewards(
-        uint256 _city,
-        uint256 _factory,
-        address _owner
-    ) public view returns (uint256) {
-        CitiesLibrary.FactoryAddition memory _addition = citiesStorage
-            .getFactoryAddition(_factory, _owner);
-
-        uint256 _rewards = getOwnerTemporalRewards(_city, _factory, _owner) +
-            _addition.entryPayment;
-
-        return _rewards + ((_rewards * rewardsMultiplier) / 100);
-    }
-
-    function getOwnerTemporalRewards(
-        uint256 _city,
-        uint256 _factory,
-        address _owner
-    ) private view returns (uint256) {
-        CitiesLibrary.CityRelation memory _relation = citiesStorage
-            .getRelationData(_city, _factory);
-
-        CitiesLibrary.FactoryAddition memory _addition = citiesStorage
-            .getFactoryAddition(_factory, _owner);
-
-        return
-            relationRewards(
-                _relation.multiplicator +
-                    calcAddition(
-                        _addition.totalEmployees,
-                        citiesStorage.augmentEmployees(),
-                        citiesStorage.maxEmployeeMultiplicator()
-                    ),
-                _addition.relationPoints + factories.getMultiplier(_factory),
-                _addition.relationPercentage
-            );
-    }
-
-    function getRemoveRelationTime(uint256 _city, uint256 _factory)
-        public
-        view
-        returns (uint256)
-    {
-        return
-            citiesStorage.getRelationStartTime(_city, _factory) +
-            citiesStorage.minTime();
-    }
-
-    function canFactoryPlay(uint256 _factory) public view returns (bool) {
-        return factoryGame[_factory] < resetedTime;
-    }
-
-    function getHardEndPrice(uint256 _city, uint256 _factory)
-        public
-        view
-        returns (uint256)
-    {
-        CitiesLibrary.CityRelation memory _relation = citiesStorage
-            .getRelationData(_city, _factory);
-
-        return
-            calculateHardEnd(
-                _relation.maxFactoryPoints,
-                _relation.momentPrice,
-                _relation.banckruptcyProbability
-            );
-    }
-
-    function canCreateARelation(address _creator) public view returns (bool) {
-        return block.timestamp > removePenal[_creator];
-    }
-
-    // Relations
-
     function changePropertyState(
-        uint256 _city,
+        uint256 _c,
         uint256 _x,
         uint256 _y,
-        bool _state
+        bool _s
     ) external {
-        require(cities.ownerOf(_city) == _msgSender(), INVALID_OWNER);
-        citiesStorage.changePropertyState(_city, _x, _y, _state);
-        emit ChangePropertyState(_city, _x, _y);
+        require(cities.ownerOf(_c) == _msgSender(), INVALID_OWNER);
+        citiesStorage.changePropertyState(_c, _x, _y, _s);
+        emit ChangePropertyState(_c, _x, _y);
     }
 
     function createCityRelation(
-        uint256 _city,
-        uint256 _factory,
+        uint256 _c,
+        uint256 _f,
         uint256 _x,
         uint256 _y
     ) external {
-        require(address(playToEarn) != address(0), INVALID_ADDRESS);
+        require(factories.ownerOf(_f) == _msgSender(), INVALID_OWNER);
 
         require(
-            cities.getLands(_city) > citiesStorage.getTotalCityRelations(_city),
+            cities.getLands(_c) >= citiesStorage.getTotalCityRelations(_c),
             INVALID_CITY_SPACES
         );
 
-        require(
-            !citiesStorage.getRelationState(_city, _factory),
-            INVALID_RELATION
-        );
-
-        require(
-            !citiesStorage.getFactoryState(_factory),
-            INVALID_FACTORY_STATE
-        );
-
-        require(factories.ownerOf(_factory) == _msgSender(), INVALID_OWNER);
+        require(!citiesStorage.getRelationState(_c, _f), INVALID_RELATION);
+        require(!citiesStorage.getFactoryState(_f), INVALID_FACTORY_STATE);
 
         CitiesLibrary.PropertyState memory property = citiesStorage
-            .getPropertyData(_city, _x, _y);
+            .getPropertyData(_c, _x, _y);
 
         require(
-            cities.ownerOf(_city) == _msgSender() || property.state == true,
+            cities.ownerOf(_c) == _msgSender() || property.state == true,
             INVALID_PROPERTY_STATE
         );
 
         require(property.hasRelation == false, HAS_RELATION);
+        require(canFactoryPlay(_f), INVALID_FACTORY_STATE);
 
-        require(factoryGame[_factory] < resetedTime, INVALID_FACTORY_STATE);
+        CitiesLibrary.CityRelationProperties memory _props = cityGetters
+            .getCityRelationProperties(_c, _f, _msgSender());
 
-        uint256 _maxFactoryPoints = citiesStorage.relationFactoryBase() *
-            factories.getMultiplier(_factory);
+        if (_props.creationPrice > 0) {
+            token.transferFrom(_msgSender(), playToEarn, _props.creationPrice);
+        }
 
-        uint256 _creationPrice = calcRelation(
-            citiesStorage.entryPrice(),
-            _maxFactoryPoints,
-            createRelationBase
-        );
+        citiesStorage.addCityRelation(_c, _f, _x, _y, _props.maxFactoryPoints);
+        teamLeader.addXPToOwner(_msgSender(), 10);
+        factoryGame[_f] = block.timestamp;
 
-        require(
-            token.transferFrom(_msgSender(), playToEarn, _creationPrice),
-            INVALID_PAYMENT
-        );
-
-        citiesStorage.addCityRelation(
-            _city,
-            _factory,
-            _x,
-            _y,
-            _maxFactoryPoints
-        );
-
-        uint256 _baseMultiplier = citiesUniversities.getBaseCityMultiplier(
-            _city
-        );
-
-        if (_baseMultiplier > 0) {
+        if (_props.baseMultiplier > 0) {
             citiesStorage.updateRelation(
-                _city,
-                _factory,
+                _c,
+                _f,
                 citiesStorage.initialBackruptcy(),
                 citiesStorage.entryPrice(),
                 0,
-                _baseMultiplier
+                _props.multiplier
             );
         }
 
-        factoryGame[_factory] = block.timestamp;
-
         emit CityRelation(
-            _city,
-            _factory,
-            _msgSender(),
-            _x,
-            _y,
-            _creationPrice,
-            _maxFactoryPoints,
-            block.timestamp
+            CityRelationEvent(
+                _c,
+                _f,
+                _msgSender(),
+                _x,
+                _y,
+                _props.creationPrice,
+                _props.maxFactoryPoints,
+                _props.maxMultiplier,
+                block.timestamp
+            )
         );
     }
 
     function removeCityRelation(
-        uint256 _city,
-        uint256 _factory,
+        uint256 _c,
+        uint256 _f,
         uint256 _x,
         uint256 _y
     ) external {
-        require(cities.validate(_city), INVALID_CITY);
-        require(factories.validate(_factory), INVALID_FACTORY);
-        require(citiesStorage.getFactoryState(_factory), INVALID_FACTORY_STATE);
-        require(factories.ownerOf(_factory) == _msgSender(), INVALID_OWNER);
-
-        require(canRemoveTheRelation(_city, _factory), INVALID_RELATION);
+        require(cities.validate(_c), INVALID_CITY);
+        require(factories.validate(_f), INVALID_FACTORY);
+        require(citiesStorage.getFactoryState(_f), INVALID_FACTORY_STATE);
+        require(factories.ownerOf(_f) == _msgSender(), INVALID_OWNER);
+        require(canRemoveTheRelation(_c, _f), INVALID_RELATION_STATE);
+        require(citiesStorage.getRelationState(_c, _f), INVALID_RELATION);
 
         require(
-            citiesStorage.getRelationState(_city, _factory),
+            citiesStorage.getPropertyData(_c, _x, _y).hasRelation == true,
             INVALID_RELATION
         );
 
-        require(
-            citiesStorage.getPropertyData(_city, _x, _y).hasRelation == true,
-            INVALID_RELATION
-        );
+        teamLeader.addXPToOwner(_msgSender(), 1);
 
-        require(canRemoveTheRelation(_city, _factory), INVALID_RELATION_STATE);
-
-        hardCityRelationEnd(_city, _factory, factories.ownerOf(_factory));
+        hardCityRelationEnd(_c, _f, factories.ownerOf(_f));
     }
 
     function createFactoryRelation(
-        uint256 _city,
-        uint256 _factory,
-        uint256[] memory _employees,
-        uint256[] memory _multiEmployees
+        uint256 _c,
+        uint256 _f,
+        uint256[] calldata _e,
+        uint256[] calldata _m
     ) external {
-        require(canCreateARelation(_msgSender()), INVALID_ADDITION);
         require(address(playToEarn) != address(0), INVALID_ADDRESS);
         require(address(creator) != address(0), INVALID_ADDRESS);
+        require(canCreateARelation(_msgSender()), INVALID_ADDITION);
+        require(_e.length > 0 || _m.length > 0, INVALID_EMPLOYEES);
+        require(citiesStorage.getFactoryState(_f), INVALID_FACTORY_STATE);
+        require(citiesStorage.getRelationState(_c, _f), INVALID_RELATION);
 
         require(
-            _employees.length > 0 || _multiEmployees.length > 0,
-            INVALID_EMPLOYEES
-        );
-
-        require(citiesStorage.getFactoryState(_factory), INVALID_FACTORY_STATE);
-
-        require(
-            citiesStorage.getRelationState(_city, _factory),
-            INVALID_RELATION
-        );
-
-        require(
-            !citiesStorage.getFactoryAdditionState(_factory, _msgSender()),
+            !citiesStorage.getFactoryAdditionState(_f, _msgSender()),
             INVALID_ADDITION
         );
 
-        require(cities.validate(_city), INVALID_CITY);
-        require(factories.validate(_factory), INVALID_FACTORY);
+        require(cities.validate(_c), INVALID_CITY);
+        require(factories.validate(_f), INVALID_FACTORY);
 
-        uint256 _employeesPoints = 0;
-        uint256 _sameTypes = 0;
-        uint8 _factoryType = factories.getType(_factory);
+        CitiesLibrary.NextProperties memory _p = CitiesLibrary.NextProperties(
+            factories.getType(_f),
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        );
 
-        if (_employees.length > 0) {
-            CitiesLibrary.EmployeesData
-                memory employeesData = extractAllEmployeesPoints(
-                    _employees,
-                    _msgSender(),
-                    _factoryType,
-                    false
-                );
+        if (_e.length > 0) {
+            CitiesLibrary.EmployeesData memory eData = extractEmployees(
+                _e,
+                _msgSender(),
+                _p.factoryType,
+                false
+            );
 
-            _sameTypes += employeesData.sameTypes;
-            _employeesPoints += employeesData.points;
+            _p.sameTypes += eData.sameTypes;
+            _p.employeesPoints += eData.points;
         }
 
-        if (_multiEmployees.length > 0) {
-            CitiesLibrary.EmployeesData
-                memory multiEmployeesData = extractAllMultiEmployeesPoints(
-                    _multiEmployees,
-                    _msgSender(),
-                    _factoryType,
-                    false
-                );
+        if (_m.length > 0) {
+            CitiesLibrary.EmployeesData memory meData = extractMulti(
+                _m,
+                _msgSender(),
+                _p.factoryType,
+                false
+            );
 
-            _sameTypes += multiEmployeesData.sameTypes;
-            _employeesPoints += multiEmployeesData.points;
+            _p.sameTypes += meData.sameTypes;
+            _p.employeesPoints += meData.points;
         }
 
-        CitiesLibrary.CityRelation memory relation = citiesStorage
-            .getRelationData(_city, _factory);
+        CitiesLibrary.CityRelation memory _r = citiesStorage.getRelationData(
+            _c,
+            _f
+        );
 
-        uint256 _totalPoints = relation.playedPoints + _employeesPoints;
+        _p.totalPoints = _r.playedPoints + _p.employeesPoints;
+        _p.entryCost = _p.employeesPoints * _r.momentPrice;
+        _p.totalEmployees = _e.length + _m.length;
+        _p.nextMultiplicator = _r.multiplicator;
+        _p.relationPercentage =
+            (_p.sameTypes * 100) /
+            ((_p.totalEmployees) * 4);
 
-        if (_totalPoints > relation.maxFactoryPoints) {
-            _totalPoints = relation.maxFactoryPoints;
+        if (_p.totalPoints >= _r.maxFactoryPoints) {
+            _p.totalPoints = _r.maxFactoryPoints;
         }
 
-        uint256 _entryCost = _employeesPoints * relation.momentPrice;
-        uint256 _totalEmployees = _employees.length + _multiEmployees.length;
-        uint256 _nextMultiplicator = relation.multiplicator;
-
-        uint256 _relationPercentage = (_sameTypes * 100) /
-            ((_totalEmployees) * 4);
+        uint256 _maxMultiplicator = teamLeader.getMaxMultiplicator(
+            factories.ownerOf(_f)
+        );
 
         if (
-            _employeesPoints >= citiesStorage.relevantPoints() &&
-            relation.multiplicator < citiesStorage.maxFactoryMultiplicator()
-        ) {
-            _nextMultiplicator++;
-        }
+            _p.employeesPoints >= citiesStorage.relevantPoints() &&
+            _r.multiplicator < citiesStorage.maxFactoryMultiplicator() &&
+            _p.nextMultiplicator < _maxMultiplicator
+        ) _p.nextMultiplicator++;
 
         citiesStorage.addFactoryAddition(
-            _relationPercentage,
-            _factory,
-            _totalEmployees,
-            _entryCost,
-            _employeesPoints,
+            _p.relationPercentage,
+            _f,
+            _p.totalEmployees,
+            _p.entryCost,
+            _p.employeesPoints,
             _msgSender()
         );
 
         citiesStorage.updateRelation(
-            _city,
-            _factory,
-            calcBankrupt(_totalPoints, relation.maxFactoryPoints),
-            calcNextPrice(relation.momentPrice, relation.augment),
-            _totalPoints,
-            _nextMultiplicator
+            _c,
+            _f,
+            cityGetters.calcBankrupt(_p.totalPoints, _r.maxFactoryPoints),
+            cityGetters.calcNextPrice(_r.momentPrice, _r.augment),
+            _p.totalPoints,
+            _p.nextMultiplicator
         );
 
-        if (_totalPoints == relation.maxFactoryPoints) {
+        if (_p.totalPoints == _r.maxFactoryPoints) {
             softCityRelationEnd(
-                _city,
-                _factory,
-                (_entryCost * factoryFees) / 100,
+                _c,
+                _f,
+                (_p.entryCost * cityGetters.factoryFees()) / 100,
                 0
             );
+
+            teamLeader.addXPToOwner(_msgSender(), _p.totalEmployees + 10);
         } else {
             citiesStorage.addFactoryRewards(
-                _factory,
-                (_entryCost * factoryFees) / 100
+                _f,
+                (_p.entryCost * cityGetters.factoryFees()) / 100
             );
+
+            teamLeader.addXPToOwner(_msgSender(), _p.totalEmployees);
         }
 
-        citiesStorage.addCityRewards(_city, (_entryCost * cityFees) / 100);
+        citiesStorage.addCityRewards(
+            _c,
+            (_p.entryCost * cityGetters.cityFees()) / 100
+        );
 
-        if (playToEarnFees > 0) {
-            require(
-                token.transferFrom(
-                    _msgSender(),
-                    playToEarn,
-                    (_entryCost * playToEarnFees) / 100
-                )
-            );
-        }
+        token.transferFrom(
+            _msgSender(),
+            playToEarn,
+            (_p.entryCost * cityGetters.playToEarnFees()) / 100
+        );
 
         emit FactoryAddition(
-            _city,
-            _factory,
-            _relationPercentage,
-            _totalEmployees,
-            _entryCost,
-            _employeesPoints,
-            _msgSender(),
-            block.timestamp
+            FactoryAdditionEvent(
+                _c,
+                _f,
+                _msgSender(),
+                _p.relationPercentage,
+                _p.totalEmployees,
+                _p.entryCost,
+                _p.employeesPoints,
+                _maxMultiplicator,
+                block.timestamp
+            )
         );
     }
 
-    function removeFactoryRelation(uint256 _city, uint256 _factory) external {
+    function removeFactoryRelation(uint256 _c, uint256 _f) external {
         require(address(playToEarn) != address(0), INVALID_ADDRESS);
         require(address(creator) != address(0), INVALID_ADDRESS);
-
-        require(citiesStorage.getFactoryState(_factory), INVALID_FACTORY_STATE);
-
-        require(
-            citiesStorage.getRelationState(_city, _factory),
-            INVALID_RELATION
-        );
-
-        require(cities.validate(_city), INVALID_CITY);
-        require(factories.validate(_factory), INVALID_FACTORY);
+        require(citiesStorage.getFactoryState(_f), INVALID_FACTORY_STATE);
+        require(citiesStorage.getRelationState(_c, _f), INVALID_RELATION);
+        require(cities.validate(_c), INVALID_CITY);
+        require(factories.validate(_f), INVALID_FACTORY);
 
         CitiesLibrary.FactoryAddition memory _addition = citiesStorage
-            .getFactoryAddition(_factory, _msgSender());
+            .getFactoryAddition(_f, _msgSender());
 
         CitiesLibrary.CityRelation memory _relation = citiesStorage
-            .getRelationData(_city, _factory);
+            .getRelationData(_c, _f);
 
         require(
             _addition.active && _addition.agregator == _msgSender(),
             INVALID_ADDITION
         );
 
-        citiesStorage.removeFactoryAddition(_factory, _msgSender());
+        citiesStorage.removeFactoryAddition(_f, _msgSender());
 
         uint256 _totalPoints = _relation.playedPoints -
             _addition.relationPoints;
 
         uint256 _nextMultiplicator = _relation.multiplicator;
 
-        if (
-            _relation.multiplicator > 0 &&
-            _addition.relationPoints >= citiesStorage.relevantPoints()
-        ) {
-            _nextMultiplicator--;
-        }
-
-        uint256 _rewards = getOwnerRelationRewards(
-            _city,
-            _factory,
+        uint256 _rewards = cityGetters.getOwnerRelationRewards(
+            _c,
+            _f,
             _msgSender()
         );
 
+        if (
+            _relation.multiplicator > 0 &&
+            _addition.relationPoints >= citiesStorage.relevantPoints()
+        ) _nextMultiplicator--;
+
         citiesStorage.updateRelation(
-            _city,
-            _factory,
-            calcBankrupt(_totalPoints, _relation.maxFactoryPoints),
+            _c,
+            _f,
+            cityGetters.calcBankrupt(_totalPoints, _relation.maxFactoryPoints),
             _relation.momentPrice,
             _totalPoints,
             _nextMultiplicator
         );
 
         citiesUniversities.addRelationRewards(_msgSender(), _rewards);
-
-        removePenal[_msgSender()] = block.timestamp + removeTime;
+        removePenal[_msgSender()] = block.timestamp + cityGetters.removeTime();
+        teamLeader.addXPToOwner(_msgSender(), 1);
 
         emit RemoveFactoryAddition(
-            _city,
-            _factory,
-            _msgSender(),
-            _rewards,
-            block.timestamp
+            RemoveFactoryAdditionEvent(
+                _c,
+                _f,
+                _msgSender(),
+                _rewards,
+                _relation.multiplicator,
+                block.timestamp
+            )
         );
     }
 
     function softCityRelationEnd(
-        uint256 _city,
-        uint256 _factory,
-        uint256 _lastAgregator,
-        uint256 _hardRelationPayment
+        uint256 _c,
+        uint256 _f,
+        uint256 _a,
+        uint256 _h
     ) private {
         CitiesLibrary.CityRelation memory _relation = citiesStorage
-            .getRelationData(_city, _factory);
+            .getRelationData(_c, _f);
 
-        address[] memory _factoryAgregators = citiesStorage.getFactoryAdditions(
-            _factory
-        );
+        address[] memory _fa = citiesStorage.getFactoryAdditions(_f);
+        uint256 _fr = citiesStorage.getFactoryRewards(_f);
 
-        for (uint256 i = 0; i < _factoryAgregators.length; i++) {
-            uint256 _rewards = getOwnerRelationRewards(
-                _city,
-                _factory,
-                _factoryAgregators[i]
+        for (uint256 i = 0; i < _fa.length; i++) {
+            uint256 _rewards = cityGetters.getOwnerRelationRewards(
+                _c,
+                _f,
+                _fa[i]
             );
 
-            citiesUniversities.addRelationRewards(
-                _factoryAgregators[i],
-                _rewards
-            );
-
-            citiesStorage.removeFactoryAddition(
-                _factory,
-                _factoryAgregators[i]
-            );
+            citiesUniversities.addRelationRewards(_fa[i], _rewards);
+            citiesStorage.removeFactoryAddition(_f, _fa[i]);
 
             emit RemoveFactoryAddition(
-                _city,
-                _factory,
-                _factoryAgregators[i],
-                _rewards,
-                block.timestamp
+                RemoveFactoryAdditionEvent(
+                    _c,
+                    _f,
+                    _fa[i],
+                    _rewards,
+                    teamLeader.getMaxMultiplicator(_msgSender()),
+                    block.timestamp
+                )
             );
         }
 
-        uint256 _factoryRewards = citiesStorage.getFactoryRewards(_factory);
-
-        citiesStorage.removeFactoryRewards(_factory, _factoryRewards);
-
-        citiesStorage.removeCityRelation(
-            _city,
-            _factory,
-            _relation.x,
-            _relation.y
-        );
-
-        citiesUniversities.addFactoriesRewards(
-            factories.ownerOf(_factory),
-            _factoryRewards + _lastAgregator
-        );
+        citiesStorage.removeFactoryRewards(_f, _fr);
+        citiesStorage.removeCityRelation(_c, _f, _relation.x, _relation.y);
+        citiesUniversities.addFactoriesRewards(factories.ownerOf(_f), _fr + _a);
 
         emit RemoveCityRelation(
-            _city,
-            _factory,
-            factories.ownerOf(_factory),
-            _relation.x,
-            _relation.y,
-            _factoryRewards + _lastAgregator,
-            _hardRelationPayment,
-            block.timestamp
+            RemoveCityRelationEvent(
+                _c,
+                _f,
+                factories.ownerOf(_f),
+                _relation.x,
+                _relation.y,
+                _relation.multiplicator,
+                _fr + _a,
+                _h,
+                block.timestamp
+            )
         );
     }
 
     function hardCityRelationEnd(
-        uint256 _city,
-        uint256 _factory,
-        address _owner
+        uint256 _c,
+        uint256 _f,
+        address _o
     ) private {
-        uint256 _hardRelationPayment = getHardEndPrice(_city, _factory);
+        uint256 _hardRelationPayment = cityGetters.getHardEndPrice(_c, _f);
 
         if (_hardRelationPayment > 0) {
-            token.transferFrom(_owner, playToEarn, _hardRelationPayment);
+            token.transferFrom(_o, playToEarn, _hardRelationPayment);
         }
 
-        softCityRelationEnd(_city, _factory, 0, _hardRelationPayment);
+        softCityRelationEnd(_c, _f, 0, _hardRelationPayment);
     }
 
     // Alterators
 
-    function extractAllEmployeesPoints(
-        uint256[] memory _employees,
-        address _owner,
-        uint8 _type,
-        bool _remove
+    function extractEmployees(
+        uint256[] calldata _e,
+        address _o,
+        uint8 _t,
+        bool _r
     ) private returns (CitiesLibrary.EmployeesData memory) {
-        uint256 points = 0;
-        uint256 sameTypes = 0;
+        uint256 _p = 0;
+        uint256 _s = 0;
 
-        for (uint256 i = 0; i < _employees.length; i++) {
-            require(employees.ownerOf(_employees[i]) == _owner, INVALID_OWNER);
+        for (uint256 i = 0; i < _e.length; i++) {
+            require(employees.ownerOf(_e[i]) == _o, INVALID_OWNER);
+            uint8[4] memory parts = employees.getParts(_e[i]);
+            _p += employees.getPoints(_e[i]);
+            for (uint256 j = 0; j < parts.length; j++) {
+                if (parts[j] == _t) _s++;
+            }
 
-            points += employees.getPoints(_employees[i]);
-
-            if (!_remove) {
-                require(
-                    citiesStorage.canEmployeePlay(_employees[i]),
-                    INVALID_EMPLOYEE
-                );
-
-                citiesStorage.playWithEmployee(_employees[i]);
-
-                uint8[4] memory parts = employees.getParts(_employees[i]);
-
-                for (uint256 j = 0; j < parts.length; j++) {
-                    if (parts[j] == _type) sameTypes++;
-                }
+            if (!_r) {
+                require(citiesStorage.canEmployeePlay(_e[i]), INVALID_EMPLOYEE);
+                citiesStorage.playWithEmployee(_e[i]);
             }
         }
 
-        return CitiesLibrary.EmployeesData(points, sameTypes);
+        return CitiesLibrary.EmployeesData(_p, _s);
     }
 
-    function extractAllMultiEmployeesPoints(
-        uint256[] memory _employees,
-        address _owner,
-        uint8 _type,
-        bool _remove
+    function extractMulti(
+        uint256[] calldata _e,
+        address _o,
+        uint8 _t,
+        bool _r
     ) private returns (CitiesLibrary.EmployeesData memory) {
-        uint256 points = 0;
-        uint256 sameTypes = 0;
+        uint256 _p = 0;
+        uint256 _s = 0;
 
-        for (uint256 i = 0; i < _employees.length; i++) {
-            require(
-                multiEmployees.ownerOf(_employees[i]) == _owner,
-                INVALID_OWNER
-            );
-
-            if (multiEmployees.getType(_employees[i]) == _type) {
-                sameTypes += 4;
+        for (uint256 i = 0; i < _e.length; i++) {
+            require(multiEmployees.ownerOf(_e[i]) == _o, INVALID_OWNER);
+            if (multiEmployees.getType(_e[i]) == _t) {
+                _s += 4;
             }
+            _p += multiEmployees.getPoints(_e[i]);
 
-            points += multiEmployees.getPoints(_employees[i]);
-
-            if (!_remove) {
+            if (!_r) {
                 require(
-                    citiesStorage.canMultiEmployeePlay(_employees[i]),
+                    citiesStorage.canMultiEmployeePlay(_e[i]),
                     INVALID_EMPLOYEE
                 );
-
-                citiesStorage.playWithMultiEmployee(_employees[i]);
+                citiesStorage.playWithMultiEmployee(_e[i]);
             }
         }
 
-        return CitiesLibrary.EmployeesData(points, sameTypes);
+        return CitiesLibrary.EmployeesData(_p, _s);
     }
 
     //Validations
 
-    function canRemoveTheRelation(uint256 _city, uint256 _factory)
+    function canRemoveTheRelation(uint256 _c, uint256 _f)
         public
         view
         returns (bool)
     {
         return
-            citiesStorage.getTotalFactoryAdditions(_factory) == 0 ||
-            (getRemoveRelationTime(_city, _factory) <= block.timestamp);
+            citiesStorage.getTotalFactoryAdditions(_f) == 0 ||
+            (cityGetters.getRemoveRelationTime(_c, _f) <= block.timestamp);
     }
 
-    // Calculations
-
-    function calcRelation(
-        uint256 _e,
-        uint256 _m,
-        uint8 _t
-    ) public pure returns (uint256) {
-        return _m * (((_e * _t) / 100));
+    function canCreateARelation(address _c) public view returns (bool) {
+        return block.timestamp > removePenal[_c];
     }
 
-    function calcBankrupt(uint256 _p, uint256 _f)
-        public
-        pure
-        returns (uint256)
-    {
-        return 100 - ((_p * 100) / _f);
-    }
-
-    function calculateHardEnd(
-        uint256 _m,
-        uint256 _p,
-        uint256 _b
-    ) public pure returns (uint256) {
-        return ((_m * _p * _b) / 100) / 2;
-    }
-
-    function calcNextPrice(uint256 _l, uint16 _a)
-        public
-        pure
-        returns (uint256)
-    {
-        return _l + ((_l * _a) / 100);
-    }
-
-    function calcAddition(
-        uint256 _e,
-        uint16 _a,
-        uint16 _m
-    ) public pure returns (uint256) {
-        uint256 _r = _e / _a;
-        return _r <= _m ? _r : _m;
-    }
-
-    function relationRewards(
-        uint256 _m,
-        uint256 _p,
-        uint256 _r
-    ) public pure returns (uint256) {
-        return (((_m * _p * _r) * 10**18) / 100);
+    function canFactoryPlay(uint256 _f) public view returns (bool) {
+        return factoryGame[_f] < resetedTime;
     }
 }

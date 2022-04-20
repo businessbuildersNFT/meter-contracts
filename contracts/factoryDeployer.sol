@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "./libraries/factory.sol";
 import "./interfaces/EBaseDeployer.sol";
+import "./interfaces/ETeamLeaderValidations.sol";
 import "./employee.sol";
 import "./factory.sol";
 import "./cityRelationsStorage.sol";
@@ -39,6 +40,7 @@ contract FactoryDeployer is Initializable, AccessControl {
     Factories private factories;
     Employees private employees;
     EBaseDeployer private baseDeployer;
+    ETeamLeaderValidations private teamLeader;
 
     address public creator;
     address public playToEarnPool;
@@ -47,7 +49,8 @@ contract FactoryDeployer is Initializable, AccessControl {
         address _token,
         address _baseDeployer,
         address _factories,
-        address _employees
+        address _employees,
+        address _teamLeader
     ) public initializer {
         _setupRole(MAIN_OWNER, msg.sender);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -58,10 +61,21 @@ contract FactoryDeployer is Initializable, AccessControl {
         factories = Factories(_factories);
         baseDeployer = EBaseDeployer(_baseDeployer);
         employees = Employees(_employees);
+        teamLeader = ETeamLeaderValidations(_teamLeader);
     }
 
-    function changeBaseDeployer(address _deployer) public onlyRole(MAIN_OWNER) {
-        baseDeployer = EBaseDeployer(_deployer);
+    function changeAddressess(
+        address _token,
+        address _baseDeployer,
+        address _factories,
+        address _employees,
+        address _teamLeader
+    ) external onlyRole(MAIN_OWNER) {
+        token = IERC20(_token);
+        factories = Factories(_factories);
+        baseDeployer = EBaseDeployer(_baseDeployer);
+        employees = Employees(_employees);
+        teamLeader = ETeamLeaderValidations(_teamLeader);
     }
 
     // Getters
@@ -157,5 +171,7 @@ contract FactoryDeployer is Initializable, AccessControl {
             totalPoints,
             msg.sender
         );
+
+        teamLeader.addXPToOwner(msg.sender, 10);
     }
 }

@@ -76,4 +76,23 @@ library CitiesLibrary {
         uint256 points;
         uint256 sameTypes;
     }
+
+    struct NextProperties {
+        uint8 factoryType;
+        uint256 employeesPoints;
+        uint256 sameTypes;
+        uint256 totalPoints;
+        uint256 entryCost;
+        uint256 totalEmployees;
+        uint256 nextMultiplicator;
+        uint256 relationPercentage;
+    }
+
+    struct CityRelationProperties {
+        uint256 maxFactoryPoints;
+        uint256 creationPrice;
+        uint256 baseMultiplier;
+        uint256 maxMultiplier;
+        uint256 multiplier;
+    }
 }
