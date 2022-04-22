@@ -53,25 +53,26 @@ Buy on: [Voltswap](https://info.voltswap.finance/#/token/0x6cfe9adad5215195c1aa9
 
 ### Employees
 Meter contract:  [0xFb5222679a578498E2f515ba339422443B329A73](https://scan.meter.io/address/0xFb5222679a578498E2f515ba339422443B329A73)
-
 Tofu Collection: [Marketplace](https://tofunft.com/collection/businessbuilders-employees/items) 
 
 ### Mini Employees
 Meter contract:  [0xc67822e0F63aA4Bb22cFfaE8D761d3F6744193Db](https://scan.meter.io/address/0xc67822e0F63aA4Bb22cFfaE8D761d3F6744193Db)
-
 Tofu Collection: [Marketplace](https://tofunft.com/collection/businessbuilders-miniemployees/items) 
+
 ### Multi Employees
 Meter contract:  [0xfA9aD073CD0043bCe5169dc0E49BE8FF909AAB92](https://scan.meter.io/address/0xfA9aD073CD0043bCe5169dc0E49BE8FF909AAB92)
-
 Tofu Collection: [Marketplace](https://tofunft.com/collection/businessbuilders%20multiemployees/items) 
+
 ### Factories
 Meter contract:  [0x31F5F941bDD788019e65798e45f2EB576F33093e](https://scan.meter.io/address/0x31F5F941bDD788019e65798e45f2EB576F33093e)
-
 Tofu Collection: [Marketplace](https://tofunft.com/collection/businessbuilders/items) 
+
 ### Cities
 Meter contract:  [0x66b1a3d81b77f15866340C38B69790AfAF4F489A](https://scan.meter.io/address/0x66b1a3d81b77f15866340C38B69790AfAF4F489A)
-
 Tofu Collection: [Marketplace](https://tofunft.com/collection/businessbuilders-cities/items) 
+
+### Team leader
+Meter contract: [0xF8afF7c27FA8B57C9e8B293bdAB07a831EFfb525](https://scan.meter.io/address/0xF8afF7c27FA8B57C9e8B293bdAB07a831EFfb525)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -119,13 +120,18 @@ Meter contract:  [0xcE5D54E9D471e6AF5237a86D43459c48C206463E](https://scan.meter
 Meter contract:  [0x6e0A51cc2Ef554EE31dcF5c1362772616db03741](https://scan.meter.io/address/0x6e0A51cc2Ef554EE31dcF5c1362772616db03741)
 
 ### Relations Getters
-Meter contract:  [0x62544D6018E6Ff5F657309cd43C5E7A4b2FC67c8](https://scan.meter.io/address/0x62544D6018E6Ff5F657309cd43C5E7A4b2FC67c8)
+Get basic information about our city relations
+Meter contract:  [0x02946Bb2DffFE3f9Ebee19807Ab2e6afA16a52B6](https://scan.meter.io/address/0x02946Bb2DffFE3f9Ebee19807Ab2e6afA16a52B6)
 
 ### Voltswap LP Rewards
 Meter contract:  [0xD423269F7BC6dfab2c267e76E3D46A23a60563BA](https://scan.meter.io/address/0xD423269F7BC6dfab2c267e76E3D46A23a60563BA)
 
 ### Voltswap Volt Rewards
 Meter contract:  [0x1d31Eb94588f362D0A8C9D3B4804aF12B90EC217](https://scan.meter.io/address/0x1d31Eb94588f362D0A8C9D3B4804aF12B90EC217)
+
+### Team leader validations
+Contract to validate all team leader interactions: 
+Meter Contract: [0x13BBE7167D83eF826f10213dbB192eC0bC02339c](https://scan.meter.io/address/0x13BBE7167D83eF826f10213dbB192eC0bC02339c)
 
 ## Contact
 

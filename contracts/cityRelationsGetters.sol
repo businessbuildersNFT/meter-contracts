@@ -103,9 +103,7 @@ contract CityRelationsGetters is Initializable, AccessControl {
         CitiesLibrary.FactoryAddition memory _a = citiesStorage
             .getFactoryAddition(_f, _o);
 
-        uint256 _maxMultiplicator = teamLeader.getMaxMultiplicator(
-            _msgSender()
-        );
+        uint256 _maxMultiplicator = teamLeader.getMaxMultiplicator(_o);
 
         uint256 _addMultiplicator = calcAddition(
             _a.totalEmployees,
